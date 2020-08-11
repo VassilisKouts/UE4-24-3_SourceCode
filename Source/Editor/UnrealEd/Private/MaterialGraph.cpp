@@ -64,6 +64,7 @@ void UMaterialGraph::RebuildGraph()
 
 		//^^^ New material properties go above here. ^^^^
 		MaterialInputs.Add(FMaterialInputInfo(LOCTEXT("MaterialAttributes", "Material Attributes"), MP_MaterialAttributes, LOCTEXT( "MaterialAttributesToolTip", "Material Attributes" ) ));
+		MaterialInputs.Add(FMaterialInputInfo(LOCTEXT("LutMap", "Lut Map"), MP_LutMap, LOCTEXT("LutMap", "Lut Map")));
 
 		// Add Root Node
 		FGraphNodeCreator<UMaterialGraphNode_Root> NodeCreator(*this);

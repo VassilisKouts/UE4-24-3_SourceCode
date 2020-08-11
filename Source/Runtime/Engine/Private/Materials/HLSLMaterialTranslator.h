@@ -948,6 +948,7 @@ public:
 			Chunk[MP_CustomData0]					= Material->CompilePropertyAndSetMaterialProperty(MP_CustomData0		,this);
 			Chunk[MP_CustomData1]					= Material->CompilePropertyAndSetMaterialProperty(MP_CustomData1		,this);
 			Chunk[MP_AmbientOcclusion]				= Material->CompilePropertyAndSetMaterialProperty(MP_AmbientOcclusion	,this);
+			Chunk[MP_LutMap]						= Material->CompilePropertyAndSetMaterialProperty(MP_LutMap, this);
 
 			if (IsTranslucentBlendMode(BlendMode) || MaterialShadingModels.HasShadingModel(MSM_SingleLayerWater))
 			{
@@ -1530,6 +1531,12 @@ ResourcesString = TEXT("");
 				OutEnvironment.SetDefine(TEXT("MATERIAL_SHADINGMODEL_SG_SSS"), TEXT("1"));
 				NumSetMaterials++;
 			}
+			if (ShadingModels.HasShadingModel(MSM_MobilePreintegratedSkin))
+			{
+				OutEnvironment.SetDefine(TEXT("MATERIAL_SHADINGMODEL_MobilePreintegratedSkin"), TEXT("1"));
+				NumSetMaterials++;
+			}
+
 			if(ShadingModels.HasShadingModel(MSM_SingleLayerWater) && (IsSwitchPlatform(Platform) || IsPS4Platform(Platform) || Platform == SP_XBOXONE_D3D12))
 			{
 				OutEnvironment.SetDefine(TEXT("DISABLE_FORWARD_LOCAL_LIGHTS"), TEXT("1"));
@@ -1753,6 +1760,53 @@ ResourcesString = TEXT("");
 		LazyPrintf.PushParam(*GenerateFunctionCode(MP_WorldDisplacement));
 		LazyPrintf.PushParam(*FString::Printf(TEXT("return %.5f"),Material->GetMaxDisplacement()));
 		LazyPrintf.PushParam(*GenerateFunctionCode(MP_TessellationMultiplier));
+
+		//Add custom lut tex
+		FMaterialShadingModelField shadingModels = Material->GetShadingModels();
+		FString lutTexCode = FString::Printf(TEXT("return 1"));
+		if (shadingModels.HasShadingModel(MSM_MobilePreintegratedSkin))
+		{
+			FString lutCode = TranslatedCodeChunkDefinitions[MP_LutMap];
+			FString returnCode = TranslatedCodeChunks[MP_LutMap];
+			int startIndex = returnCode.Find(".rgb");
+			if (startIndex != INDEX_NONE)
+			{
+				returnCode = returnCode.Left(startIndex);
+				FString containCode = "MaterialFloat4 " + returnCode + " = ProcessMaterialColorTextureLookup";
+				FString leftStr;
+				FString rightStr;
+				while (lutCode.Split(";", &leftStr, &rightStr))
+				{
+					if (leftStr.Contains(returnCode))
+					{
+						int len = lutCode.Len();
+						startIndex = leftStr.Find("Parameters.TexCoords[");
+						if (startIndex != INDEX_NONE)
+						{
+							leftStr = lutCode.Left(startIndex);
+							rightStr = lutCode.Right(len - startIndex);
+							startIndex = rightStr.Find(".xy");
+							if (startIndex != INDEX_NONE)
+							{
+								rightStr = rightStr.Right(rightStr.Len() - startIndex - 3);
+								startIndex = rightStr.Find(";");
+								if (startIndex != INDEX_NONE)
+								{
+									rightStr = rightStr.Left(startIndex) + ";\r\n";
+								}
+								lutCode = leftStr + "uv" + rightStr;
+								lutTexCode = lutCode + "	return " + TranslatedCodeChunks[MP_LutMap];
+							}
+
+							break;
+						}
+					}
+
+					lutCode = rightStr;
+				}
+			}
+		}
+		LazyPrintf.PushParam(*lutTexCode);
 		LazyPrintf.PushParam(*GenerateFunctionCode(MP_CustomData0));
 		LazyPrintf.PushParam(*GenerateFunctionCode(MP_CustomData1));
 

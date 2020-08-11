@@ -635,6 +635,18 @@ void Main(
 				//half VoL = pow(max( 1 - dot(  MaterialParameters.CameraVector ,L), 0 ),2);
 				//Diffuse += VoL*SG*Curvature;
 				//end
+			#elif MATERIAL_SHADINGMODEL_MobilePreintegratedSkin
+				float3 VertexNormalWS = MaterialParameters.TangentToWorld[2];
+				float3 L = MobileDirectionalLight.DirectionalLightDirectionAndShadowTransition.xyz;
+				float VNoLWS = dot(VertexNormalWS, L);
+				float3 PreintegratedBRDF = GetLutColor( float2(pow(saturate(VNoLWS * .5 + .5),2), 1 - Opacity ));
+				half3 Diffuse = Shadow * PreintegratedBRDF * MobileDirectionalLight.DirectionalLightColor.rgb * DiffuseColor;
+				//Transmittance
+				float3 TransLightDir = L + VertexNormalWS + Opacity;
+				half TransDot = saturate(dot(-TransLightDir,MaterialParameters.CameraVector));
+				float3 transmission = pow(TransDot , 1)*PreintegratedBRDF;
+				Diffuse = transmission ;
+			#else
 				half3 Diffuse = Shadow * NoL * MobileDirectionalLight.DirectionalLightColor.rgb * DiffuseColor;
 			#endif
 

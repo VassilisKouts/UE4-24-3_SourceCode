@@ -1,7 +1,3 @@
-/Source/*
-!/Source/Editor/UnrealEd/
-!/Source/Runtime/Engine/
-
 #C++ Common ignore files
 # Prerequisites
 *.d
