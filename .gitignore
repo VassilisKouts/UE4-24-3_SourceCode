@@ -1,3 +1,21 @@
+#此文件放在引擎的Engine目录下
+/Binaries/*
+/Build/*
+/Config/*
+/Content/*
+/Saved/*
+/Plugins/*
+/Programs/*
+/Saved/*
+/DerivedDataCache/*
+/Documentation/*
+/Extras/*
+/Intermediate/*
+/Platforms/*
+
+!/Source/Editor/UnrealEd/
+!/Source/Runtime/Engine/
+
 #C++ Common ignore files
 # Prerequisites
 *.d
